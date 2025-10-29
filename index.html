@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AquaSmart Bolivia - Simulador de Recolectores Inteligentes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1a5276;
+            --secondary: #3498db;
+            --accent: #2ecc71;
+            --warning: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --text: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.2rem 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            font-size: 2.5rem;
+            color: var(--accent);
+        }
+        
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .logo p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+        
+        .live-dot {
+            width: 12px;
+            height: 12px;
+            background-color: var(--accent);
+            border-radius: 50%;
+        }
+        
+        /* Navigation */
+        nav {
+            background-color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            list-style: none;
+            gap: 10px;
+        }
+        
+        .nav-tabs li a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-tabs li a:hover, .nav-tabs li a.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .report-button {
+            background: linear-gradient(135deg, var(--accent), #27ae60);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .report-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Dashboard Styles */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Region Selector */
+        .region-selector {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            height: fit-content;
+        }
+        
+        .region-selector h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .region-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .region-item {
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .region-item:hover {
+            background-color: #f5f9ff;
+        }
+        
+        .region-item.active {
+            border-color: var(--secondary);
+            background-color: #e3f2fd;
+        }
+        
+        .region-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+        
+        .region-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        /* Simulation Panel */
+        .simulation-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .visualization {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .panel-header h2 {
+            color: var(--primary);
+        }
+        
+        .system-status {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-online {
+            background-color: var(--accent);
+        }
+        
+        .status-offline {
+            background-color: #95a5a6;
+        }
+        
+        .status-warning {
+            background-color: var(--warning);
+        }
+        
+        .system-diagram {
+            flex: 1;
+            background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        
+        .water-tank {
+            width: 180px;
+            height: 300px;
+            border: 6px solid var(--primary);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            background-color: #e6f3ff;
+        }
+        
+        .water-level {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, #1a5276, #3498db);
+            transition: height 1s ease;
+        }
+        
+        .water-wave {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+        }
+        
+        .tank-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .sensor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .sensor-level {
+            top: 50px;
+            right: -25px;
+            background-color: var(--accent);
+        }
+        
+        .sensor-flow {
+            bottom: 80px;
+            left: -25px;
+            background-color: var(--secondary);
+        }
+        
+        .sensor-quality {
+            top: 150px;
+            right: -25px;
+            background-color: #9b59b6;
+        }
+        
+        .controls {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .control-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .control-group h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .control-label {
+            width: 180px;
+            font-weight: 500;
+        }
+        
+        .slider-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slider-container input {
+            flex: 1;
+        }
+        
+        .value-display {
+            width: 70px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+            background-color: #f0f7ff;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: var(--accent);
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Statistics */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        /* Data Log */
+        .data-log {
+            background-color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin-top: 2rem;
+        }
+        
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .log-entries {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .log-entry {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f5f5f5;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: #666;
+        }
+        
+        .log-message {
+            flex: 1;
+            margin: 0 15px;
+        }
+        
+        .log-type-info {
+            color: var(--secondary);
+        }
+        
+        .log-type-warning {
+            color: var(--warning);
+        }
+        
+        .log-type-success {
+            color: var(--accent);
+        }
+        
+        /* Regions Tab */
+        .regions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .region-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .region-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .region-card-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.5rem;
+        }
+        
+        .region-card-body {
+            padding: 1.5rem;
+        }
+        
+        .region-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .region-stat {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        /* Statistics Tab */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Configuration Tab */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .config-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Team Tab */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .team-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .team-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .team-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        .team-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .team-role {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .footer-logo span {
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+        
+        .footer-info {
+            text-align: right;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .simulation-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .charts-container, .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>AquaSmart Bolivia</h1>
+                    <p>Sistemas Inteligentes de Recolección de Agua</p>
+                </div>
+            </div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span>SIMULACIÓN EN TIEMPO REAL</span>
+            </div>
+        </div>
+    </header>
+    
+    <nav>
+        <div class="container nav-container">
+            <ul class="nav-tabs">
+                <li><a href="#" class="nav-link active" data-tab="dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-tab="regions"><i class="fas fa-map-marked-alt"></i> Regiones</a></li>
+                <li><a href="#" class="nav-link" data-tab="statistics"><i class="fas fa-chart-line"></i> Estadísticas</a></li>
+                <li><a href="#" class="nav-link" data-tab="configuration"><i class="fas fa-cogs"></i> Configuración</a></li>
+                <li><a href="#" class="nav-link" data-tab="team"><i class="fas fa-users"></i> Equipo</a></li>
+            </ul>
+            <button class="report-button" id="generateReport">
+                <i class="fas fa-file-pdf"></i> Generar Reporte
+            </button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Dashboard Principal</h2>
+            <p>Monitoreo en tiempo real de los sistemas de recolección de agua</p>
+            
+            <div class="dashboard">
+                <div class="region-selector">
+                    <h2><i class="fas fa-map-marker-alt"></i> Regiones de La Paz</h2>
+                    <div class="region-list">
+                        <div class="region-item active" data-region="altiplano">
+                            <div class="region-name">Altiplano Norte</div>
+                            <div class="region-details">
+                                <span>El Alto</span>
+                                <span>3800 msnm</span>
+                            </div>
+                        </div>
+                        <div class="region-item" data-region="valle">
+                            <div class="region-name">Valle de La Paz</div>
+                            <div class="region-details">
+                                <span>Ciudad de La Paz</span>
+                                <span>3600 msnm</span>
+                            </div>
+                        </div>
+                        <div class="region-item" data-region="yungas">
+                            <div class="region-name">Yungas</div>
+                            <div class="region-details">
+                                <span>Coroico</span>
+                                <span>1500 msnm</span>
+                            </div>
+                        </div>
+                        <div class="region-item" data-region="lago">
+                            <div class="region-name">Lago Titicaca</div>
+                            <div class="region-details">
+                                <span>Copacabana</span>
+                                <span>3810 msnm</span>
+                            </div>
+                        </div>
+                        <div class="region-item" data-region="sur">
+                            <div class="region-name">Sur de La Paz</div>
+                            <div class="region-details">
+                                <span>Viacha</span>
+                                <span>3850 msnm</span>
+                            </div>
+                        </div>
+                        <div class="region-item" data-region="amazonia">
+                            <div class="region-name">Amazonía Paceña</div>
+                            <div class="region-details">
+                                <span>Rurrenabaque</span>
+                                <span>300 msnm</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="simulation-panel">
+                    <div class="visualization">
+                        <div class="panel-header">
+                            <h2>Sistema de Recolección - <span id="current-region">Altiplano Norte</span></h2>
+                            <div class="system-status">
+                                <div class="status-indicator">
+                                    <div class="status-dot status-online"></div>
+                                    <span>En Línea</span>
+                                </div>
+                                <div class="status-indicator">
+                                    <div class="status-dot status-warning"></div>
+                                    <span>Lluvia Moderada</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="system-diagram">
+                            <div class="water-tank">
+                                <div class="water-level" id="waterLevel" style="height: 65%;">
+                                    <div class="water-wave"></div>
+                                </div>
+                                <div class="sensor sensor-level">
+                                    <i class="fas fa-ruler-vertical"></i>
+                                </div>
+                                <div class="sensor sensor-flow">
+                                    <i class="fas fa-water"></i>
+                                </div>
+                                <div class="sensor sensor-quality">
+                                    <i class="fas fa-vial"></i>
+                                </div>
+                                <div class="tank-label">TANQUE PRINCIPAL</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <div class="control-group">
+                            <h3><i class="fas fa-cloud-rain"></i> Condiciones Climáticas</h3>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Intensidad de Lluvia</div>
+                                <div class="slider-container">
+                                    <input type="range" id="rain-intensity" min="0" max="100" value="65">
+                                    <div class="value-display" id="rain-intensity-value">65%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Temperatura Ambiente</div>
+                                <div class="slider-container">
+                                    <input type="range" id="temperature" min="-5" max="35" value="12">
+                                    <div class="value-display" id="temperature-value">12°C</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Humedad Relativa</div>
+                                <div class="slider-container">
+                                    <input type="range" id="humidity" min="0" max="100" value="45">
+                                    <div class="value-display" id="humidity-value">45%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <h3><i class="fas fa-cog"></i> Configuración del Sistema</h3>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Capacidad del Tanque</div>
+                                <div class="slider-container">
+                                    <input type="range" id="tank-capacity" min="1000" max="10000" value="5000">
+                                    <div class="value-display" id="tank-capacity-value">5000 L</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Área de Captación</div>
+                                <div class="slider-container">
+                                    <input type="range" id="captation-area" min="50" max="300" value="150">
+                                    <div class="value-display" id="captation-area-value">150 m²</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Filtración Activa</div>
+                                <div class="toggle-container">
+                                    <label class="toggle">
+                                        <input type="checkbox" id="filtration" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span id="filtration-status">Activada</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <h3><i class="fas fa-chart-pie"></i> Distribución de Uso</h3>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Riego Agrícola</div>
+                                <div class="slider-container">
+                                    <input type="range" id="agricultural-use" min="0" max="100" value="40">
+                                    <div class="value-display" id="agricultural-use-value">40%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Uso Doméstico</div>
+                                <div class="slider-container">
+                                    <input type="range" id="domestic-use" min="0" max="100" value="35">
+                                    <div class="value-display" id="domestic-use-value">35%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="control-row">
+                                <div class="control-label">Otros Usos</div>
+                                <div class="slider-container">
+                                    <input type="range" id="other-use" min="0" max="100" value="25">
+                                    <div class="value-display" id="other-use-value">25%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <div class="stat-value" id="water-collected">3,250 L</div>
+                    <div class="stat-label">Agua Recolectada (Hoy)</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-leaf"></i>
+                    </div>
+                    <div class="stat-value" id="water-saved">12,500 L</div>
+                    <div class="stat-label">Agua Ahorrada (Mes)</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="stat-value" id="system-efficiency">78%</div>
+                    <div class="stat-label">Eficiencia del Sistema</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <div class="stat-value" id="rain-probability">65%</div>
+                    <div class="stat-label">Probabilidad de Lluvia</div>
+                </div>
+            </div>
+            
+            <div class="data-log">
+                <div class="log-header">
+                    <h3><i class="fas fa-clipboard-list"></i> Registro del Sistema</h3>
+                    <button class="report-button" id="clearLog">
+                        <i class="fas fa-trash"></i> Limpiar Registro
+                    </button>
+                </div>
+                <div class="log-entries" id="logEntries">
+                    <!-- Las entradas del log se generarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Regions Tab -->
+        <div id="regions" class="tab-content">
+            <h2>Regiones de Implementación</h2>
+            <p>Análisis detallado de los sistemas en las diferentes regiones del departamento de La Paz</p>
+            
+            <div class="regions-grid">
+                <div class="region-card">
+                    <div class="region-card-header">
+                        <h3>Altiplano Norte</h3>
+                        <p>El Alto - 3800 msnm</p>
+                    </div>
+                    <div class="region-card-body">
+                        <p><strong>Clima:</strong> Frío y seco</p>
+                        <p><strong>Precipitación:</strong> Baja a moderada (400-600 mm/año)</p>
+                        <p><strong>Sistema Adaptado:</strong> Tanques de alta capacidad con aislamiento térmico</p>
+                        <div class="region-stats">
+                            <div class="region-stat">
+                                <div class="stat-value">72%</div>
+                                <div class="stat-label">Eficiencia</div>
+                            </div>
+                            <div class="region-stat">
+                                <div class="stat-value">4,200 L</div>
+                                <div class="stat-label">Recolección Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="region-card">
+                    <div class="region-card-header">
+                        <h3>Valle de La Paz</h3>
+                        <p>Ciudad de La Paz - 3600 msnm</p>
+                    </div>
+                    <div class="region-card-body">
+                        <p><strong>Clima:</strong> Templado</p>
+                        <p><strong>Precipitación:</strong> Moderada (600-800 mm/año)</p>
+                        <p><strong>Sistema Adaptado:</strong> Sistemas modulares urbanos</p>
+                        <div class="region-stats">
+                            <div class="region-stat">
+                                <div class="stat-value">78%</div>
+                                <div class="stat-label">Eficiencia</div>
+                            </div>
+                            <div class="region-stat">
+                                <div class="stat-value">5,800 L</div>
+                                <div class="stat-label">Recolección Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="region-card">
+                    <div class="region-card-header">
+                        <h3>Yungas</h3>
+                        <p>Coroico - 1500 msnm</p>
+                    </div>
+                    <div class="region-card-body">
+                        <p><strong>Clima:</strong> Cálido y húmedo</p>
+                        <p><strong>Precipitación:</strong> Alta (1500-2000 mm/año)</p>
+                        <p><strong>Sistema Adaptado:</strong> Sistemas de alta capacidad con filtros avanzados</p>
+                        <div class="region-stats">
+                            <div class="region-stat">
+                                <div class="stat-value">85%</div>
+                                <div class="stat-label">Eficiencia</div>
+                            </div>
+                            <div class="region-stat">
+                                <div class="stat-value">12,500 L</div>
+                                <div class="stat-label">Recolección Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="region-card">
+                    <div class="region-card-header">
+                        <h3>Lago Titicaca</h3>
+                        <p>Copacabana - 3810 msnm</p>
+                    </div>
+                    <div class="region-card-body">
+                        <p><strong>Clima:</strong> Frío</p>
+                        <p><strong>Precipitación:</strong> Variable (500-700 mm/año)</p>
+                        <p><strong>Sistema Adaptado:</strong> Sistemas comunitarios de gran escala</p>
+                        <div class="region-stats">
+                            <div class="region-stat">
+                                <div class="stat-value">75%</div>
+                                <div class="stat-label">Eficiencia</div>
+                            </div>
+                            <div class="region-stat">
+                                <div class="stat-value">6,300 L</div>
+                                <div class="stat-label">Recolección Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="region-card">
+                    <div class="region-card-header">
+                        <h3>Sur de La Paz</h3>
+                        <p>Viacha - 3850 msnm</p>
+                    </div>
+                    <div class="region-card-body">
+                        <p><strong>Clima:</strong> Frío y ventoso</p>
+                        <p><strong>Precipitación:</strong> Baja (300-500 mm/año)</p>
+                        <p><strong>Sistema Adaptado:</strong> Sistemas con protección contra viento</p>
+                        <div class="region-stats">
+                            <div class="region-stat">
+                                <div class="stat-value">68%</div>
+                                <div class="stat-label">Eficiencia</div>
+                            </div>
+                            <div class="region-stat">
+                                <div class="stat-value">3,500 L</div>
+                                <div class="stat-label">Recolección Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="region-card">
+                    <div class="region-card-header">
+                        <h3>Amazonía Paceña</h3>
+                        <p>Rurrenabaque - 300 msnm</p>
+                    </div>
+                    <div class="region-card-body">
+                        <p><strong>Clima:</strong> Tropical</p>
+                        <p><strong>Precipitación:</strong> Muy alta (2000-3000 mm/año)</p>
+                        <p><strong>Sistema Adaptado:</strong> Sistemas de ultra capacidad con drenaje inteligente</p>
+                        <div class="region-stats">
+                            <div class="region-stat">
+                                <div class="stat-value">82%</div>
+                                <div class="stat-label">Eficiencia</div>
+                            </div>
+                            <div class="region-stat">
+                                <div class="stat-value">18,000 L</div>
+                                <div class="stat-label">Recolección Promedio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Tab -->
+        <div id="statistics" class="tab-content">
+            <h2>Estadísticas y Análisis</h2>
+            <p>Datos históricos y tendencias de los sistemas de recolección</p>
+            
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Eficiencia por Región</h3>
+                    <canvas id="efficiencyChart" height="300"></canvas>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>Recolección Mensual Promedio</h3>
+                    <canvas id="monthlyCollectionChart" height="300"></canvas>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>Distribución de Usos</h3>
+                    <canvas id="usageDistributionChart" height="300"></canvas>
+                </div>
+                
+                <div class="chart-card">
+                    <h3>Tendencias Climáticas</h3>
+                    <canvas id="climateTrendsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Configuration Tab -->
+        <div id="configuration" class="tab-content">
+            <h2>Configuración del Sistema</h2>
+            <p>Personalización de parámetros y ajustes avanzados</p>
+            
+            <div class="config-grid">
+                <div class="config-card">
+                    <h3><i class="fas fa-sliders-h"></i> Parámetros Generales</h3>
+                    <div class="control-group">
+                        <div class="control-row">
+                            <div class="control-label">Umbral de Alerta</div>
+                            <div class="slider-container">
+                                <input type="range" id="alert-threshold" min="1" max="100" value="80">
+                                <div class="value-display" id="alert-threshold-value">80%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <div class="control-label">Intervalo de Reporte</div>
+                            <div class="slider-container">
+                                <input type="range" id="report-interval" min="1" max="24" value="6">
+                                <div class="value-display" id="report-interval-value">6 h</div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <div class="control-label">Modo Ahorro de Energía</div>
+                            <div class="toggle-container">
+                                <label class="toggle">
+                                    <input type="checkbox" id="power-saving" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span id="power-saving-status">Activado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="config-card">
+                    <h3><i class="fas fa-bell"></i> Notificaciones</h3>
+                    <div class="control-group">
+                        <div class="control-row">
+                            <div class="control-label">Alertas por Email</div>
+                            <div class="toggle-container">
+                                <label class="toggle">
+                                    <input type="checkbox" id="email-alerts" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span id="email-alerts-status">Activado</span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <div class="control-label">Notificaciones Push</div>
+                            <div class="toggle-container">
+                                <label class="toggle">
+                                    <input type="checkbox" id="push-notifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span id="push-notifications-status">Activado</span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <div class="control-label">Reportes Automáticos</div>
+                            <div class="toggle-container">
+                                <label class="toggle">
+                                    <input type="checkbox" id="auto-reports">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span id="auto-reports-status">Desactivado</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="config-card">
+                    <h3><i class="fas fa-database"></i> Gestión de Datos</h3>
+                    <div class="control-group">
+                        <div class="control-row">
+                            <div class="control-label">Retención de Datos</div>
+                            <div class="slider-container">
+                                <input type="range" id="data-retention" min="1" max="36" value="12">
+                                <div class="value-display" id="data-retention-value">12 meses</div>
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <div class="control-label">Frecuencia de Backup</div>
+                            <div class="slider-container">
+                                <input type="range" id="backup-frequency" min="1" max="7" value="3">
+                                <div class="value-display" id="backup-frequency-value">3 días</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <button class="report-button" style="width: 100%;">
+                            <i class="fas fa-download"></i> Exportar Datos Históricos
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="config-card">
+                    <h3><i class="fas fa-shield-alt"></i> Seguridad</h3>
+                    <div class="control-group">
+                        <div class="control-row">
+                            <div class="control-label">Autenticación Two-Factor</div>
+                            <div class="toggle-container">
+                                <label class="toggle">
+                                    <input type="checkbox" id="two-factor-auth">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span id="two-factor-auth-status">Desactivado</span>
+                            </div>
+                        </div>
+                        
+                        <div class="control-row">
+                            <div class="control-label">Registro de Auditoría</div>
+                            <div class="toggle-container">
+                                <label class="toggle">
+                                    <input type="checkbox" id="audit-log" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span id="audit-log-status">Activado</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <button class="report-button" style="width: 100%; background: var(--warning);">
+                            <i class="fas fa-redo"></i> Restablecer Configuración
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Team Tab -->
+        <div id="team" class="tab-content">
+            <h2>Nuestro Equipo</h2>
+            <p>Conoce a los ingenieros especialistas detrás de AquaSmart Bolivia</p>
+            
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-photo">PB</div>
+                    <div class="team-name">Pablo Barrientos</div>
+                    <div class="team-role">Ingeniero en Sistemas Sustentables</div>
+                    <p class="team-bio">
+                        Especialista en diseño de sistemas de recolección de agua con más de 10 años de experiencia. 
+                        Ha liderado proyectos de sostenibilidad hídrica en diversas comunidades.
+                    </p>
+                    <div style="margin-top: 1rem;">
+                        <i class="fas fa-envelope"></i> pablo@aquasmart.bo<br>
+                        <i class="fas fa-phone"></i> +591 76543210
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-photo">JN</div>
+                    <div class="team-name">Jorge Narma</div>
+                    <div class="team-role">Ingeniero en Automatización</div>
+                    <p class="team-bio">
+                        Experto en sistemas de control y sensores para aplicaciones ambientales. 
+                        Desarrolla tecnologías para optimizar el uso de recursos naturales.
+                    </p>
+                    <div style="margin-top: 1rem;">
+                        <i class="fas fa-envelope"></i> jorge@aquasmart.bo<br>
+                        <i class="fas fa-phone"></i> +591 76543211
+                    </div>
+                </div>
+                
+                <div class="team-card">
+                    <div class="team-photo">RL</div>
+                    <div class="team-name">René Lopez</div>
+                    <div class="team-role">Ingeniero en Computación</div>
+                    <p class="team-bio">
+                        Desarrollador de software y simulaciones para sistemas sustentables. 
+                        Crea herramientas digitales para la educación y planificación ambiental.
+                    </p>
+                    <div style="margin-top: 1rem;">
+                        <i class="fas fa-envelope"></i> rene@aquasmart.bo<br>
+                        <i class="fas fa-phone"></i> +591 76543212
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 3rem; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+                <h3>Contacto General</h3>
+                <p>Para más información sobre nuestros sistemas de recolección de agua inteligentes, contáctenos:</p>
+                <p style="margin-top: 1rem;"><strong>Email:</strong> info@aquasmart.bo</p>
+                <p><strong>Teléfono:</strong> +591 (2) 277-8888</p>
+                <p><strong>Dirección:</strong> Av. Ecología 123, Zona Sur, La Paz, Bolivia</p>
+                <p><strong>Horario de atención:</strong> Lunes a Viernes 8:00 - 18:00</p>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-logo">
+                <span><i class="fas fa-tint"></i></span>
+                <div>
+                    <h3>AquaSmart Bolivia</h3>
+                    <p>Tecnología para un futuro sostenible</p>
+                </div>
+            </div>
+            <div class="footer-info">
+                <p>Ingenieros a cargo: Pablo Barrientos, Jorge Narma, René Lopez</p>
+                <p>Contacto: info@aquasmart.bo | +591 (2) 277-8888</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Datos de las regiones
+        const regions = {
+            altiplano: {
+                name: "Altiplano Norte",
+                location: "El Alto",
+                altitude: "3800 msnm",
+                climate: "Frío y seco",
+                rainfall: "Baja a moderada",
+                defaultRain: 65,
+                defaultTemp: 12,
+                defaultHumidity: 45,
+                defaultTankCapacity: 5000,
+                defaultArea: 150
+            },
+            valle: {
+                name: "Valle de La Paz",
+                location: "Ciudad de La Paz",
+                altitude: "3600 msnm",
+                climate: "Templado",
+                rainfall: "Moderada",
+                defaultRain: 75,
+                defaultTemp: 15,
+                defaultHumidity: 60,
+                defaultTankCapacity: 4500,
+                defaultArea: 120
+            },
+            yungas: {
+                name: "Yungas",
+                location: "Coroico",
+                altitude: "1500 msnm",
+                climate: "Cálido y húmedo",
+                rainfall: "Alta",
+                defaultRain: 85,
+                defaultTemp: 22,
+                defaultHumidity: 80,
+                defaultTankCapacity: 6000,
+                defaultArea: 180
+            },
+            lago: {
+                name: "Lago Titicaca",
+                location: "Copacabana",
+                altitude: "3810 msnm",
+                climate: "Frío",
+                rainfall: "Variable",
+                defaultRain: 70,
+                defaultTemp: 10,
+                defaultHumidity: 65,
+                defaultTankCapacity: 5500,
+                defaultArea: 130
+            },
+            sur: {
+                name: "Sur de La Paz",
+                location: "Viacha",
+                altitude: "3850 msnm",
+                climate: "Frío y ventoso",
+                rainfall: "Baja",
+                defaultRain: 55,
+                defaultTemp: 11,
+                defaultHumidity: 40,
+                defaultTankCapacity: 4000,
+                defaultArea: 110
+            },
+            amazonia: {
+                name: "Amazonía Paceña",
+                location: "Rurrenabaque",
+                altitude: "300 msnm",
+                climate: "Tropical",
+                rainfall: "Muy alta",
+                defaultRain: 90,
+                defaultTemp: 28,
+                defaultHumidity: 85,
+                defaultTankCapacity: 8000,
+                defaultArea: 200
+            }
+        };
+
+        // Variables de simulación
+        let currentRegion = 'altiplano';
+        let simulationInterval;
+        let logEntries = [];
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTabs();
+            initializeRegionSelector();
+            initializeControls();
+            initializeCharts();
+            startSimulation();
+            initializeLog();
+            
+            // Configurar el botón de generar reporte
+            document.getElementById('generateReport').addEventListener('click', generatePDFReport);
+            document.getElementById('clearLog').addEventListener('click', clearLog);
+        });
+
+        // Sistema de pestañas
+        function initializeTabs() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remover clase activa de todos los enlaces
+                    navLinks.forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    // Agregar clase activa al enlace clickeado
+                    this.classList.add('active');
+                    
+                    // Ocultar todo el contenido de pestañas
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Mostrar el contenido de la pestaña seleccionada
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+
+        // Selector de regiones
+        function initializeRegionSelector() {
+            const regionItems = document.querySelectorAll('.region-item');
+            
+            regionItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remover clase activa de todos los elementos
+                    regionItems.forEach(i => i.classList.remove('active'));
+                    
+                    // Agregar clase activa al elemento clickeado
+                    this.classList.add('active');
+                    
+                    // Actualizar la región actual
+                    currentRegion = this.getAttribute('data-region');
+                    
+                    // Actualizar la interfaz con los datos de la región
+                    updateRegionData();
+                    
+                    // Agregar entrada al log
+                    addLogEntry(`Sistema cambiado a región: ${regions[currentRegion].name}`, 'info');
+                });
+            });
+        }
+
+        // Actualizar datos de la región
+        function updateRegionData() {
+            const region = regions[currentRegion];
+            
+            // Actualizar el nombre de la región en el panel
+            document.getElementById('current-region').textContent = region.name;
+            
+            // Actualizar los controles con los valores por defecto de la región
+            document.getElementById('rain-intensity').value = region.defaultRain;
+            document.getElementById('rain-intensity-value').textContent = region.defaultRain + '%';
+            
+            document.getElementById('temperature').value = region.defaultTemp;
+            document.getElementById('temperature-value').textContent = region.defaultTemp + '°C';
+            
+            document.getElementById('humidity').value = region.defaultHumidity;
+            document.getElementById('humidity-value').textContent = region.defaultHumidity + '%';
+            
+            document.getElementById('tank-capacity').value = region.defaultTankCapacity;
+            document.getElementById('tank-capacity-value').textContent = region.defaultTankCapacity + ' L';
+            
+            document.getElementById('captation-area').value = region.defaultArea;
+            document.getElementById('captation-area-value').textContent = region.defaultArea + ' m²';
+            
+            // Actualizar la simulación
+            updateSimulation();
+        }
+
+        // Inicializar controles
+        function initializeControls() {
+            // Configurar eventos para los controles deslizantes
+            const sliders = document.querySelectorAll('input[type="range"]');
+            sliders.forEach(slider => {
+                slider.addEventListener('input', function() {
+                    const valueDisplay = document.getElementById(this.id + '-value');
+                    let unit = '%';
+                    
+                    if (this.id === 'temperature') unit = '°C';
+                    if (this.id === 'tank-capacity') unit = ' L';
+                    if (this.id === 'captation-area') unit = ' m²';
+                    if (this.id === 'report-interval') unit = ' h';
+                    if (this.id === 'data-retention') unit = ' meses';
+                    if (this.id === 'backup-frequency') unit = ' días';
+                    
+                    valueDisplay.textContent = this.value + unit;
+                    updateSimulation();
+                });
+            });
+            
+            // Configurar eventos para los toggles
+            const toggles = document.querySelectorAll('input[type="checkbox"]');
+            toggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const statusElement = document.getElementById(this.id + '-status');
+                    if (statusElement) {
+                        statusElement.textContent = this.checked ? 'Activado' : 'Desactivado';
+                    }
+                    updateSimulation();
+                });
+            });
+        }
+
+        // Inicializar gráficos
+        function initializeCharts() {
+            // Gráfico de eficiencia por región
+            const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
+            new Chart(efficiencyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Altiplano Norte', 'Valle de La Paz', 'Yungas', 'Lago Titicaca', 'Sur de La Paz', 'Amazonía Paceña'],
+                    datasets: [{
+                        label: 'Eficiencia (%)',
+                        data: [72, 78, 85, 75, 68, 82],
+                        backgroundColor: [
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(155, 89, 182, 0.7)',
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(231, 76, 60, 0.7)',
+                            'rgba(46, 204, 113, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(52, 152, 219)',
+                            'rgb(46, 204, 113)',
+                            'rgb(155, 89, 182)',
+                            'rgb(52, 152, 219)',
+                            'rgb(231, 76, 60)',
+                            'rgb(46, 204, 113)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de recolección mensual
+            const monthlyCtx = document.getElementById('monthlyCollectionChart').getContext('2d');
+            new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Altiplano Norte',
+                        data: [3200, 3500, 3800, 4200, 4500, 4800, 5200, 5000, 4700, 4300, 3800, 3400],
+                        borderColor: 'rgb(52, 152, 219)',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Yungas',
+                        data: [10500, 11200, 12500, 13800, 14500, 15200, 16800, 17500, 16200, 14800, 13200, 11800],
+                        borderColor: 'rgb(46, 204, 113)',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+            
+            // Gráfico de distribución de usos
+            const usageCtx = document.getElementById('usageDistributionChart').getContext('2d');
+            new Chart(usageCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Riego Agrícola', 'Uso Doméstico', 'Limpieza', 'Otros'],
+                    datasets: [{
+                        data: [40, 35, 15, 10],
+                        backgroundColor: [
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(155, 89, 182, 0.7)',
+                            'rgba(241, 196, 15, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(52, 152, 219)',
+                            'rgb(46, 204, 113)',
+                            'rgb(155, 89, 182)',
+                            'rgb(241, 196, 15)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+            
+            // Gráfico de tendencias climáticas
+            const climateCtx = document.getElementById('climateTrendsChart').getContext('2d');
+            new Chart(climateCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2019', '2020', '2021', '2022', '2023'],
+                    datasets: [{
+                        label: 'Precipitación (mm)',
+                        data: [580, 620, 590, 650, 680],
+                        borderColor: 'rgb(52, 152, 219)',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.4
+                    }, {
+                        label: 'Temperatura Promedio (°C)',
+                        data: [13.5, 13.8, 14.2, 14.5, 14.8],
+                        borderColor: 'rgb(231, 76, 60)',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        yAxisID: 'y1',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Precipitación (mm)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Temperatura (°C)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Iniciar simulación en tiempo real
+        function startSimulation() {
+            // Actualizar la simulación cada 3 segundos
+            simulationInterval = setInterval(updateSimulation, 3000);
+        }
+
+        // Actualizar simulación
+        function updateSimulation() {
+            // Obtener valores actuales de los controles
+            const rainIntensity = parseInt(document.getElementById('rain-intensity').value);
+            const temperature = parseInt(document.getElementById('temperature').value);
+            const humidity = parseInt(document.getElementById('humidity').value);
+            const tankCapacity = parseInt(document.getElementById('tank-capacity').value);
+            const captationArea = parseInt(document.getElementById('captation-area').value);
+            const agriculturalUse = parseInt(document.getElementById('agricultural-use').value);
+            const domesticUse = parseInt(document.getElementById('domestic-use').value);
+            const otherUse = parseInt(document.getElementById('other-use').value);
+            const filtrationActive = document.getElementById('filtration').checked;
+            
+            // Calcular valores simulados (algoritmo simplificado)
+            const waterCollected = Math.round((rainIntensity / 100) * captationArea * 0.8 * (humidity / 50));
+            const waterSaved = waterCollected * 30; // Estimación mensual
+            const systemEfficiency = Math.min(100, Math.round(70 + (rainIntensity / 5) + (filtrationActive ? 10 : 0)));
+            const rainProbability = Math.min(100, Math.round(rainIntensity * 0.8 + (humidity / 2)));
+            
+            // Calcular nivel de agua en el tanque (porcentaje)
+            const waterLevel = Math.min(100, Math.round((waterCollected / tankCapacity) * 100 * 10));
+            
+            // Actualizar visualización
+            document.getElementById('waterLevel').style.height = waterLevel + '%';
+            document.getElementById('water-collected').textContent = formatNumber(waterCollected) + ' L';
+            document.getElementById('water-saved').textContent = formatNumber(waterSaved) + ' L';
+            document.getElementById('system-efficiency').textContent = systemEfficiency + '%';
+            document.getElementById('rain-probability').textContent = rainProbability + '%';
+            
+            // Actualizar estado del sistema
+            updateSystemStatus(rainIntensity, waterLevel);
+            
+            // Agregar entrada aleatoria al log ocasionalmente
+            if (Math.random() > 0.7) {
+                addRandomLogEntry();
+            }
+        }
+
+        // Actualizar estado del sistema
+        function updateSystemStatus(rainIntensity, waterLevel) {
+            const statusIndicator = document.querySelectorAll('.status-indicator')[1];
+            
+            if (rainIntensity > 70) {
+                statusIndicator.innerHTML = '<div class="status-dot status-warning"></div><span>Lluvia Intensa</span>';
+            } else if (rainIntensity > 40) {
+                statusIndicator.innerHTML = '<div class="status-dot status-online"></div><span>Lluvia Moderada</span>';
+            } else {
+                statusIndicator.innerHTML = '<div class="status-dot status-offline"></div><span>Lluvia Ligera</span>';
+            }
+            
+            // Advertencia si el tanque está casi lleno
+            if (waterLevel > 90) {
+                addLogEntry(`Advertencia: Tanque al ${waterLevel}% de capacidad`, 'warning');
+            }
+        }
+
+        // Formatear números con separadores de miles
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        // Inicializar registro del sistema
+        function initializeLog() {
+            // Agregar algunas entradas iniciales
+            addLogEntry('Sistema de recolección iniciado', 'success');
+            addLogEntry('Conectando a sensores regionales...', 'info');
+            addLogEntry('Conexión establecida con estación meteorológica', 'success');
+            addLogEntry('Sensores de nivel de agua calibrados', 'info');
+        }
+
+        // Agregar entrada al registro
+        function addLogEntry(message, type) {
+            const logEntries = document.getElementById('logEntries');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <div class="log-time">${timestamp}</div>
+                <div class="log-message log-type-${type}">${message}</div>
+                <div class="log-type">${type.toUpperCase()}</div>
+            `;
+            
+            logEntries.appendChild(entry);
+            logEntries.scrollTop = logEntries.scrollHeight;
+            
+            // Guardar entrada para el reporte
+            window.logEntries = window.logEntries || [];
+            window.logEntries.push({timestamp, message, type});
+        }
+
+        // Agregar entrada aleatoria al registro
+        function addRandomLogEntry() {
+            const messages = [
+                'Lectura de sensor de flujo actualizada',
+                'Datos meteorológicos recibidos',
+                'Sistema de filtración funcionando normalmente',
+                'Nivel de pH del agua dentro de parámetros normales',
+                'Bomba de distribución activada',
+                'Válvula de desvío ajustada',
+                'Calidad del agua: Óptima para uso agrícola',
+                'Presión del sistema estable'
+            ];
+            
+            const types = ['info', 'success'];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            
+            addLogEntry(randomMessage, randomType);
+        }
+
+        // Limpiar registro
+        function clearLog() {
+            document.getElementById('logEntries').innerHTML = '';
+            window.logEntries = [];
+            addLogEntry('Registro del sistema limpiado', 'info');
+        }
+
+        // Generar reporte PDF
+        function generatePDFReport() {
+            addLogEntry('Generando reporte del sistema...', 'info');
+            
+            // Usar html2canvas para capturar la visualización
+            html2canvas(document.querySelector('.system-diagram')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                
+                // Crear PDF
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                // Título del reporte
+                doc.setFontSize(20);
+                doc.setTextColor(26, 82, 118);
+                doc.text('Reporte del Sistema de Recolección', 105, 20, { align: 'center' });
+                
+                // Información de la región
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Región: ${regions[currentRegion].name}`, 20, 40);
+                doc.text(`Ubicación: ${regions[currentRegion].location}`, 20, 48);
+                doc.text(`Altitud: ${regions[currentRegion].altitude}`, 20, 56);
+                doc.text(`Clima: ${regions[currentRegion].climate}`, 20, 64);
+                
+                // Fecha y hora
+                const now = new Date();
+                doc.text(`Generado: ${now.toLocaleString()}`, 20, 72);
+                
+                // Imagen del sistema
+                doc.addImage(imgData, 'PNG', 20, 85, 170, 80);
+                
+                // Estadísticas
+                doc.setFontSize(16);
+                doc.setTextColor(26, 82, 118);
+                doc.text('Estadísticas del Sistema', 20, 180);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Agua recolectada: ${document.getElementById('water-collected').textContent}`, 20, 192);
+                doc.text(`Agua ahorrada: ${document.getElementById('water-saved').textContent}`, 20, 200);
+                doc.text(`Eficiencia del sistema: ${document.getElementById('system-efficiency').textContent}`, 20, 208);
+                doc.text(`Probabilidad de lluvia: ${document.getElementById('rain-probability').textContent}`, 20, 216);
+                
+                // Configuración actual
+                doc.setFontSize(16);
+                doc.setTextColor(26, 82, 118);
+                doc.text('Configuración Actual', 20, 235);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Intensidad de lluvia: ${document.getElementById('rain-intensity-value').textContent}`, 20, 247);
+                doc.text(`Temperatura: ${document.getElementById('temperature-value').textContent}`, 20, 255);
+                doc.text(`Humedad: ${document.getElementById('humidity-value').textContent}`, 20, 263);
+                doc.text(`Capacidad del tanque: ${document.getElementById('tank-capacity-value').textContent}`, 20, 271);
+                doc.text(`Área de captación: ${document.getElementById('captation-area-value').textContent}`, 20, 279);
+                
+                // Guardar PDF
+                doc.save(`reporte_aquasmart_${currentRegion}_${now.getTime()}.pdf`);
+                
+                addLogEntry('Reporte PDF generado exitosamente', 'success');
+            });
+        }
+    </script>
+</body>
+</html>
